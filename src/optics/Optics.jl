@@ -188,10 +188,10 @@ function example()
     T = S      # put returns a new state of the same type
 
     # view : (Int, String) → Int
-    view = (s::S) -> s[1]
+    view = s -> s[1]
 
     # update : ( (Int, String), Int ) → (Int, String)
-    update = (s::S, b::Int) -> (b, s[2])
+    update = (s, b::Int) -> (b, s[2])
 
     L = Lens{S,A,B,T,typeof(view),typeof(update)}(view, update)
 
