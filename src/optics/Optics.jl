@@ -1,6 +1,6 @@
 module Optics
 
-# Simple monoidal "Set" category
+# Simple monoidal "Set" category for testing
 
 """
     SimpleMonoidal()
@@ -23,9 +23,9 @@ monoidal_unit(::SimpleMonoidal) = Nothing
 # Tensor on morphisms: (f : X→X', g : Y→Y') ↦ (x,y) ↦ (f(x), g(y))
 tensor(::SimpleMonoidal, f::F, g::G) where {F,G} = (x, y) -> (f(x), g(y))
 
-# Unitors: we pretend I⊗X = X and X⊗I = X, so unitors are identity.
+# Unitors: pretend I⊗X = X and X⊗I = X, so unitors are identity.
 right_unitor(::SimpleMonoidal, ::Type{X}) where {X} = (x::X) -> x
-left_unitor(::SimpleMonoidal, ::Type{X}) where {X}  = (x::X) -> x
+left_unitor(::SimpleMonoidal, ::Type{X})  where {X} = (x::X) -> x
 
 # Associators for cartesian product:
 # α : X × (Y × Z) → (X × Y) × Z  and α⁻¹ : (X × Y) × Z → X × (Y × Z)
@@ -40,53 +40,42 @@ assocl(::SimpleMonoidal) = (xy, z) -> begin
 end
 
 
-# Generic Optic type
+# Generic optic type
 """
     Optic{C,S,A,T,B,M,F,G}
 
 A generic optic in a (here: Set-like) monoidal category `C`.
 
-Interpretation (in `Set`):
+In `Set` semantics:
 
 - `S, A, T, B, M` are object types.
 - `forward :: F` has type `S → (M, A)`.
 - `backward :: G` has type `(M, B) → T`.
-
-But, in a general monoidal category, this would be:
-- forward  : S → M ⊗ A
-- backward : M ⊗ B → T
 """
-struct Optic{C,S,A,T,B,M,F,G} # added F and G to be explicit
+struct Optic{C,S,A,T,B,M,F,G}
     C        :: C
     forward  :: F
     backward :: G
 end
 
-# Constructor w/ type inference
-Optic(cat::C0, forward::F, backward::G) where {C0,F,G} =
-    Optic{C0,Any,Any,Any,Any,Any,F,G}(cat, forward, backward)
 
-
-# id and comp of optics (Set-like)
+# id and comp of optics
 """
     id_optic(C, ::Type{S}, ::Type{T}) -> Optic
 
 Identity optic on (S,T).
 
-In Set-like semantics, we can take residual M = `Nothing` and:
+In Set-like semantics, we take residual M = `Nothing` and:
 
 - forward : S → (Nothing, S)
 - backward: (Nothing, T) → T
 """
 function id_optic(C::SimpleMonoidal, ::Type{S}, ::Type{T}) where {S,T}
-    M = Nothing
-
     forward  = (s::S) -> (nothing, s)
-    backward = (_m::M, t::T) -> t
+    backward = (_m, t::T) -> t
 
-    return Optic{SimpleMonoidal,S,S,T,T,M,typeof(forward),typeof(backward)}(
-        C, forward, backward
-    )
+    return Optic{SimpleMonoidal,S,S,T,T,Nothing,
+                 typeof(forward),typeof(backward)}(C, forward, backward)
 end
 
 """
@@ -114,45 +103,38 @@ function compose_optic(o2::Optic{SimpleMonoidal,A,U,T2,B2,M2,F2,G2},
     C = o1.C
     @assert C === o2.C "Base categories must match"
 
-    # New residual object type: pair
+    # Type of new residual
     M = Tuple{M1,M2}
 
     forward = let f1 = o1.forward, f2 = o2.forward
-        (s::S) -> begin
+        function (s::S)
             (m1, a) = f1(s)
             (m2, u) = f2(a)
-            ((m1, m2)::M, u::U)
+            ((m1, m2), u)
         end
     end
 
     backward = let b1 = o1.backward, b2 = o2.backward
-        (m::M, v::B2) -> begin
+        function (m, v::B2)
             m1, m2 = m
-            # First run o2 backward: (M2, V) → B
-            b = b2(m2, v)        # :: B1
-            # Then run o1 backward: (M1, B) → T
-            b1(m1, b)            # :: T1
+            b = b2(m2, v)   # :: B1
+            b1(m1, b)       # :: T1
         end
     end
 
-    return Optic{SimpleMonoidal,S,U,T1,B2,M,typeof(forward),typeof(backward)}(
-        C, forward, backward
-    )
+    return Optic{SimpleMonoidal,S,U,T1,B2,M,
+                 typeof(forward),typeof(backward)}(C, forward, backward)
 end
-
 
 
 # Lenses
 """
-    Lens{S,A}
+    Lens{S,A,B,T,F,G}
 
 Simple Set-like lens:
 
 - `view   :: S → A`
 - `update :: (S, B) → T`
-
-We keep T and B as type parameters for generality, but usually
-it will be T = S and B = A.
 """
 struct Lens{S,A,B,T,F,G}
     view   :: F  # S → A
@@ -162,7 +144,7 @@ end
 """
     lens(view, update)
 
-Convenience constructor with type inference.
+Convenience constructor with type inference (S,A,B,T are inferred from usage).
 """
 lens(view::F, update::G) where {F,G} =
     Lens{Any,Any,Any,Any,F,G}(view, update)
@@ -172,30 +154,28 @@ lens(view::F, update::G) where {F,G} =
 
 Embed a Lens into the generic Optic form, using residual M = S:
 
-- forward(s)  = (s, view(s))      :: (S, A)
-- backward(s, b) = update(s, b)   :: T
+- forward(s)    = (s, view(s))      :: (S, A)
+- backward(s,b) = update(s, b)      :: T
 """
 function lens_to_optic(C::SimpleMonoidal,
                        L::Lens{S,A,B,T,F,G}) where {S,A,B,T,F,G}
-    M = S
+    forward  = (s::S) -> (s, L.view(s))
+    backward = (m::S, b::B) -> L.update(m, b)
 
-    forward = (s::S) -> (s::M, L.view(s)::A)
-    backward = (m::M, b::B) -> L.update(m, b)::T
-
-    return Optic{SimpleMonoidal,S,A,T,B,M,typeof(forward),typeof(backward)}(
-        C, forward, backward
-    )
+    return Optic{SimpleMonoidal,S,A,T,B,S,
+                 typeof(forward),typeof(backward)}(C, forward, backward)
 end
 
 
-# Testing
+# test
 """
     example()
 
-Testing:
+Run a small example demonstrating:
+
 - building a Lens on the first component of a pair (Int, String),
 - turning it into an Optic,
-- using forward/backward,
+- using its forward/backward,
 - composing it with itself as an Optic.
 """
 function example()
@@ -204,8 +184,8 @@ function example()
     # State type S = (Int, String), focus on A = Int
     S = Tuple{Int,String}
     A = Int
-    B = Int  # updates with an Int
-    T = S    # put returns a new state of the same type
+    B = Int    # updates with an Int
+    T = S      # put returns a new state of the same type
 
     # view : (Int, String) → Int
     view = (s::S) -> s[1]
@@ -215,7 +195,7 @@ function example()
 
     L = Lens{S,A,B,T,typeof(view),typeof(update)}(view, update)
 
-    println("Lens view((1, \"hi\"))     = ", L.view((1, "hi")))
+    println("Lens view((1, \"hi\"))       = ", L.view((1, "hi")))
     println("Lens update((1, \"hi\"), 10) = ", L.update((1, "hi"), 10))
 
     O = lens_to_optic(C, L)
@@ -230,8 +210,8 @@ function example()
     println("Optic backward(M, 42) gives new state T:")
     println("  T = ", s1)
 
-    # Compose the lens-optic with itself
-    O2 = compose_optic(O, O)  # (S,T)->(A,B) then (A,B)->(A,B); here A=B=T=S
+    # Compose the lens-optic with itself (toy demo)
+    O2 = compose_optic(O, O)
 
     (m2, a2) = O2.forward(s0)
     println("\nComposed optic forward((1,\"hello\")):")
