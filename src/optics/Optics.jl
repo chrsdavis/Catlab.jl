@@ -18,6 +18,8 @@ end
 # TODO: restrict from ANY using AJ morphism type(s)
 
 
+# TODO: left_unitor and right_unitor
+
 """
     id_optic(C, S, T)
 
