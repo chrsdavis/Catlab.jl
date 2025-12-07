@@ -110,6 +110,8 @@ end
 
 include("Lens.jl")  # Lens specializaton
 
+# TODO: LensOptic
+
 """
     lens_to_optic(L::Lens)
 
