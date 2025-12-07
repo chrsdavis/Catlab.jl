@@ -21,6 +21,8 @@ end
 # TODO: left_unitor() and right_unitor()
 # TODO: inv()
 # TODO: associator()
+# TODO: tensor
+# TODO: id
 
 """
     id_optic(C, S, T)
