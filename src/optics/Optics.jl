@@ -79,6 +79,35 @@ function compose_optic(o2::Optic, o1::Optic)
 end
 
 
+"""
+    OpticCategory(C::MonoidalCategory)
+
+Build the category whose objects are pairs (S,T) of objects in C and
+whose morphisms are Optics over C.
+"""
+struct OpticCategory{C}
+    base :: C
+end
+
+# Objects: maybe literally pairs?
+struct OpticObject{S,T}
+    source :: S
+    target :: T
+end
+
+# TODO: catlab cat interface
+
+# dom(o::Optic) = OpticObject(o.S, o.T)
+# codom(o::Optic) = OpticObject(o.A, o.B)
+
+# id(CO::OpticObject, OC::OpticCategory) =
+#    id_optic(OC.base, CO.source, CO.target)
+
+# compose(o2::Optic, o1::Optic, OC::OpticCategory) =
+#    compose_optic(o2, o1)
+
+
+
 include("Lens.jl")  # Lens specializaton
 
 """
