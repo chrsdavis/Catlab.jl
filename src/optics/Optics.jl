@@ -210,15 +210,16 @@ function example()
     println("Optic backward(M, 42) gives new state T:")
     println("  T = ", s1)
 
-    # Compose the lens-optic with itself (toy demo)
-    O2 = compose_optic(O, O)
+    # Compose the lens-optic with identity on its focus type A
+    idA = id_optic(C, A, A)
+    O2  = compose_optic(idA, O)  # id ∘ O, still (S,S) → (A,A)
 
     (m2, a2) = O2.forward(s0)
-    println("\nComposed optic forward((1,\"hello\")):")
+    println("\nComposed optic (id ∘ O) forward((1,\"hello\")):")
     println("  M2 = ", m2, ", A2 = ", a2)
 
     s2 = O2.backward(m2, 100)
-    println("Composed optic backward(M2, 100):")
+    println("Composed optic (id ∘ O) backward(M2, 100):")
     println("  T2 = ", s2)
 
     return nothing
