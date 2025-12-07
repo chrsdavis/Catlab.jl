@@ -63,8 +63,8 @@ struct Optic{C,S,A,T,B,M,F,G} # added F and G to be explicit
 end
 
 # Constructor w/ type inference
-Optic(C::C, forward::F, backward::G) where {C,F,G} =
-    Optic{C,Any,Any,Any,Any,Any,F,G}(C, forward, backward)
+Optic(cat::C0, forward::F, backward::G) where {C0,F,G} =
+    Optic{C0,Any,Any,Any,Any,Any,F,G}(cat, forward, backward)
 
 
 # id and comp of optics (Set-like)
