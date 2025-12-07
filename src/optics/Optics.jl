@@ -77,4 +77,6 @@ function compose_optic(o2::Optic, o1::Optic)
 end
 
 
+include("Lens.jl")  # Lens specializaton
+
 end # module Optics
