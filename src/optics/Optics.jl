@@ -1,18 +1,30 @@
 module Optics
 
 """
-    Optic{C,S,A,T,B,M}
+    Optic{S,A,T,B,M,L,R}
 
-A generic optic in a monoidal category `C`:
-  - forward : S ⟶ M ⊗ A
-  - backward: M ⊗ B ⟶ T
+A generic optic in a (strict) symmetric monoidal category `C`.
+
+It bundles:
+  - objects  S, A, T, B, M :: ObExpr
+  - forward  :: HomExpr (S ⟶ M ⊗ A)
+  - backward :: Homexpr (M ⊗ B ⟶ T)
+
 The residual/complement object `M` is existential at the level of the coend,
 but we represent it explicitly here for simplicity.
+
+We do not store the particular SMC theory C as a parameter; all the
+structure comes from `Catlab.Theories` (⊗, ⋅, id, munit, …).
 """
-struct Optic{C,S,A,T,B,M}
-    C        :: C        # base category
-    forward  :: Any      # morphism in C: S → M ⊗ A
-    backward :: Any      # morphism in C: M ⊗ B → T
+struct Optic{S<:ObExpr,A<:ObExpr,T<:ObExpr,B<:ObExpr,M<:ObExpr,
+             L<:HomExpr,R<:HomExpr}
+    S::S
+    A::A
+    T::T
+    B::B
+    M::M
+    forward::L    # morphism in C: S → M ⊗ A
+    backward::R   # morphism in C: M ⊗ B → T
 end
 
 # TODO: restrict from ANY using AJ morphism type(s)
