@@ -1,5 +1,7 @@
 module Optics
 
+using Theories
+
 """
     Optic{S,A,T,B,M,L,R}
 
