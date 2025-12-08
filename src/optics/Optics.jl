@@ -5,7 +5,7 @@ using Theories
 """
     Optic{S,A,T,B,M,L,R}
 
-A generic optic in a (strict) symmetric monoidal category `C`.
+A generic optic in a (strict) symmetric monoidal category (SMC) `C`.
 
 It bundles:
   - objects  S, A, T, B, M :: ObExpr
@@ -27,6 +27,25 @@ struct Optic{S<:ObExpr,A<:ObExpr,T<:ObExpr,B<:ObExpr,M<:ObExpr,
     M::M
     forward::L    # morphism in C: S → M ⊗ A
     backward::R   # morphism in C: M ⊗ B → T
+end
+
+"""
+    Optic(S, A, T, B, M, forward, backward)
+
+Type-checked constructor: enforces the optic typing in the underlying SMC.
+"""
+function Optic(S::ObExpr, A::ObExpr, T::ObExpr, B::ObExpr, M::ObExpr,
+               forward::HomExpr, backward::HomExpr)
+    # Type checks in the monoidal category
+    @assert dom(forward) == S
+    @assert codom(forward) == (M ⊗ A)
+    @assert dom(backward) == (M ⊗ B)
+    @assert codom(backward) == T
+
+    return Optic{typeof(S),typeof(A),typeof(T),typeof(B),typeof(M),
+                 typeof(forward),typeof(backward)}(
+        S, A, T, B, M, forward, backward
+    )
 end
 
 
