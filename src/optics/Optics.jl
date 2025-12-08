@@ -2,6 +2,8 @@ module Optics
 
 using Theories
 
+import Theories: HomExpr, ObExpr
+
 """
     Optic{S,A,T,B,M,L,R}
 
