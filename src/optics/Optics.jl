@@ -27,8 +27,6 @@ struct Optic{S<:ObExpr,A<:ObExpr,T<:ObExpr,B<:ObExpr,M<:ObExpr,
     backward::R   # morphism in C: M ⊗ B → T
 end
 
-# TODO: restrict from ANY using AJ morphism type(s)
-
 
 # TODO: left_unitor() and right_unitor()
 # TODO: inv()
