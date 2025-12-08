@@ -88,34 +88,50 @@ end
 """
     compose_optic(o2, o1)
 
-Compose optics (o1 : (S,T)->(A,B)) and (o2 : (A,B)->(U,V))
-to get an optic (S,T)->(U,V).
+Compose optics
+  o1 : (S,T₁) → (A,B)
+  o2 : (A,T₂) → (U,B)
+
+to obtain an optic
+  (S,T₁) → (U,B)
+
+The residuals M₁ and M₂ are combined as M = M₁ ⊗ M₂.
+
+TODO:
+We currently require that the “output B” objects agree syntactically;
+this matches the typical lens-like case. But, we can generalize to the
+full profunctor encoding later for different B₁,B₂.
 """
 function compose_optic(o2::Optic, o1::Optic)
-    C = o1.C
-    @assert C === o2.C  "Base categories must match" # TODO: does this have to hold...?
+    # Ensure the middle matches
+    @assert o1.A == o2.S  "Inner focus objects must match (A)."
+    @assert o1.B == o2.B  "Update object B must currently agree for composition."
 
-    # Aliases to make things moe clear
-    l1, r1 = o1.forward, o1.backward
-    l2, r2 = o2.forward, o2.backward
-    M1, M2 = o1.M, o2.M  # Could store M as field or recompute from morph domains
+    # Aliases for readability
+    S, A, U = o1.S, o1.A, o2.A
+    T1, B, T2 = o1.T, o1.B, o2.T
+    M1, M2 = o1.M, o2.M
+    l1, l2 = o1.forward,  o2.forward
+    r1, r2 = o1.backward, o2.backward
 
-    # Build residual / structural isos
-    M  = tensor(C, M1, M2)  # M = M1 ⊗ M2
+    # New residual is tensor of residuals
+    M = M1 ⊗ M2
 
-    # forward: S → M ⊗ U
-    f1 = l1                          # S → M1 ⊗ A
-    f2 = tensor(C, id(C,M1), l2)     # M1 ⊗ A → M1 ⊗ (M2 ⊗ U)
-    α  = associator(C, M1, M2, o2.A) # (M1 ⊗ (M2 ⊗ U)) → (M1 ⊗ M2) ⊗ U
-    forward  = α ∘ f2 ∘ f1
+    # Forward:
+    #   S ──l1──▶ M1 ⊗ A
+    #        id(M1)⊗l2
+    #     ───────────▶ M1 ⊗ (M2 ⊗ U)
+    #
+    # Using (strict) associativity, this is a morphism S → M ⊗ U.
+    forward = (id(M1) ⊗ l2) ⋅ l1
 
-    # backward: M ⊗ V → T
-    α⁻¹      = inv(associator(C, M1, M2, o2.B))
-    b1       = α⁻¹                            # (M1 ⊗ M2) ⊗ V → M1 ⊗ (M2 ⊗ V)
-    b2       = tensor(C, id(C,M1), r2)        # M1 ⊗ (M2 ⊗ V) → M1 ⊗ B
-    backward = r1 ∘ b2 ∘ b1
+    # Backward:
+    #   M1 ⊗ (M2 ⊗ B) ── id(M1)⊗r2 ──▶ M1 ⊗ B ──r1──▶ T1
+    #
+    # Again, (strict) associativity lets us view the domain as (M1 ⊗ M2) ⊗ B.
+    backward = r1 ⋅ (id(M1) ⊗ r2)
 
-    return Optic{typeof(C),o1.S,o1.A,o2.T,o2.B,typeof(M)}(C, forward, backward)
+    return Optic(S, U, T1, B, M, forward, backward)
 end
 
 
