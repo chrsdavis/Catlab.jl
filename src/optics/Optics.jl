@@ -60,21 +60,28 @@ end
 # TODO: diagonal_pairing
 
 """
-    id_optic(C, S, T)
+    id_optic(S, T)
 
-Identity optic on (S,T) in the optic category built over C.
+Identity optic on the object pair (S,T) in the optic category.
+The residual is the monoidal unit `I = munit()`.
+
+Using strictness of the SMC, we implement the
+isos `S ≅ I ⊗ S` and `I ⊗ T ≅ T` as identities.
 """
-function id_optic(C, S, T)
-    I = monoidal_unit(C) # e.g. from the monoidal interface
+function id_optic(S::ObExpr, T::ObExpr)
+    I = munit()
 
-    # Structural (unitor) isos in C:
-    ρS = right_unitor(C, S) # S ≅ I ⊗ S
-    λT = left_unitor(C, T)  # I ⊗ T ≅ T
+    # TODO:
+    # Provide structural (unitor) isos in C; i.e.,
+    # the left and right unitors λ_S and ρ_S
+    # Then, forward = inv(ρS), backward = λT
 
-    forward  = inv(ρS) # S → I ⊗ S
-    backward = λT      # I ⊗ T → T
+    # In a *strict* monoidal category we have I ⊗ S ≡ S, I ⊗ T ≡ T,
+    # so we can take these to be identities (i.e., λ and ρ are ids).
+    forward  = id(S)  # S ⟶ S  (≅ I ⊗ S)
+    backward = id(T)  # T ⟶ T  (≅ I ⊗ T)
 
-    return Optic{typeof(C),S,S,T,T,typeof(I)}(C, forward, backward)
+    return Optic(S, S, T, T, I, forward, backward)
 end
 
 
