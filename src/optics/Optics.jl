@@ -66,7 +66,8 @@ Identity optic on the object pair (S,T) in the optic category.
 The residual is the monoidal unit `I = munit()`.
 
 Using strictness of the SMC, we implement the
-isos `S ≅ I ⊗ S` and `I ⊗ T ≅ T` as identities.
+isos `S ≅ I ⊗ S` and `I ⊗ T ≅ T` as identities, and thus
+don't need to deal with unitors or associators.
 """
 function id_optic(S::ObExpr, T::ObExpr)
     I = munit()
