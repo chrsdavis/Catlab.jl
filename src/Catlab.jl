@@ -13,6 +13,7 @@ include("adts/ADTs.jl")
 include("programs/Programs.jl")
 include("parsers/Parsers.jl")
 include("sheaves/Sheaves.jl")
+include("optics/module.jl")
 
 @reexport using .Theories
 @reexport using .Graphs
@@ -24,5 +25,6 @@ include("sheaves/Sheaves.jl")
 @reexport using .Programs
 @reexport using .Parsers
 @reexport using .Sheaves
+@reexport using .Optics
 
 end # module

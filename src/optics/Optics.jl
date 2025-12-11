@@ -1,8 +1,7 @@
 module Optics
 
-using Theories
-
-import Theories: HomExpr, ObExpr, dom, codom, id, compose
+using ..Theories
+import ..Theories: HomExpr, ObExpr, dom, codom, id, compose
 
 """
     Optic{S,A,T,B,M,L,R}
