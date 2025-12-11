@@ -187,7 +187,31 @@ hom(OC::OpticCategory, o::Optic) = o
 id(OC::OpticCategory, X::OpticObject) = id_optic(X.S, X.T)
 compose(OC::OpticCategory, g::Optic, f::Optic) = compose_optic(g, f)
 
+#-------------------------------------------------------------------------------
+# Convenience Constructors
+#-------------------------------------------------------------------------------
 
+"""
+    optic(forward::HomExpr, backward::HomExpr)
+
+Creates an optic from explicit forward and backward maps.
+Inferred types: S = dom(forward), A = right factor of codom(forward),
+T = codom(backward), B = right factor of dom(backward),
+M = left factor of both.
+"""
+function optic(forward::HomExpr, backward::HomExpr)
+    S = dom(forward)
+    MA = codom(forward)
+    M = left(MA)  # TODO: Need helper to extract left factor
+    A = right(MA)
+    
+    MB = dom(backward)
+    @assert left(MB) == M "Residual M doesn't match"
+    B = right(MB)
+    T = codom(backward)
+    
+    Optic(S, A, T, B, M, forward, backward)
+end
 
 # include("Lens.jl")  # Lens specializaton
 
