@@ -202,7 +202,7 @@ M = left factor of both.
 function optic(forward::HomExpr, backward::HomExpr)
     S = dom(forward)
     MA = codom(forward)
-    M = left(MA)  # TODO: Need helper to extract left factor
+    M = left(MA)
     A = right(MA)
     
     MB = dom(backward)
@@ -213,29 +213,29 @@ function optic(forward::HomExpr, backward::HomExpr)
     Optic(S, A, T, B, M, forward, backward)
 end
 
-# include("Lens.jl")  # Lens specializaton
+# TODO: Need helper to extract left/right factor
+# Helper functions to extract left/right factors (simplified)
+left(expr::ObExpr) = expr  # In actual implementation, need to parse ⊗
+right(expr::ObExpr) = expr
 
-# # TODO: LensOptic
+#-------------------------------------------------------------------------------
+# Special Optics
+#-------------------------------------------------------------------------------
 
-# """
-#     lens_to_optic(L::Lens)
+# TODO: add more
 
-# Convert a Lens (in a cartesian category) into a generic Optic.
-# """
-# function lens_to_optic(L::Lens)
-#     C, S, A, T, B = L.C, L.S, L.A, L.T, L.B
-
-#     M = S
-
-#     prod      = product(C, S, A)          # S × A
-#     pair      = diagonal_pairing(C, S, A, L.view)   # ⟨id_S, view⟩ : S → S × A
-#     forward   = pair
-#     backward  = L.update                  # S × B → T
-
-#     return Optic{typeof(C),S,A,T,B,typeof(M)}(C, forward, backward)
-# end
-
-# # Convenience type alias
-# const LensOptic{C,S,A,T,B} = Optic{C,S,A,T,B,S}
+# Reindexing optic (adapter)
+function reindex_optic(f::HomExpr, g::HomExpr)
+    S = dom(f)
+    A = codom(f)
+    T = codom(g)
+    B = dom(g)
+    M = munit()
+    
+    forward = f  # S → A ≅ I⊗A
+    backward = g # B → T ≅ I⊗B → T (with unitor)
+    
+    Optic(S, A, T, B, M, forward, backward)
+end
 
 end # module Optics
