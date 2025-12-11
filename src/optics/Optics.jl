@@ -71,11 +71,6 @@ isos `S ≅ I ⊗ S` and `I ⊗ T ≅ T` as identities.
 function id_optic(S::ObExpr, T::ObExpr)
     I = munit()
 
-    # TODO:
-    # Provide structural (unitor) isos in C; i.e.,
-    # the left and right unitors λ_S and ρ_S
-    # Then, forward = inv(ρS), backward = λT
-
     # In a *strict* monoidal category we have I ⊗ S ≡ S, I ⊗ T ≡ T,
     # so we can take these to be identities (i.e., λ and ρ are ids).
     forward  = id(S)  # S ⟶ S  (≅ I ⊗ S)
