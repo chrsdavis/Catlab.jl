@@ -1,19 +1,29 @@
 module Optics
 
 using ...Theories
-import ...Theories: HomExpr, ObExpr, dom, codom, id, compose
+import ...Theories: HomExpr, ObExpr, dom, codom, id, compose, ⊗, ⋅, munit
 
-export Optic, OpticCategory, OpticObject
+export Optic, OpticCategory, OpticObject, dom, codom, id, compose,
+       otimes_optic, parallel_optic, optic_lens, optic_prism,
+       lens_to_optic, prism_to_optic
+
+
+#--------------------------------------------------------------------
+# Generic Optic Types
+#--------------------------------------------------------------------
 
 """
     Optic{S,A,T,B,M,L,R}
 
 A generic optic in a (strict) symmetric monoidal category (SMC) `C`.
 
+Mathematically, an optic from (S,T) to (A,B) is an element of the coend:
+  ∫ᴹ C(S, M⊗A) × C(M⊗B, T)
+
 It bundles:
-  - objects  S, A, T, B, M :: ObExpr
-  - forward  :: HomExpr (S ⟶ M ⊗ A)
-  - backward :: Homexpr (M ⊗ B ⟶ T)
+  - objects in the base category  S, A, T, B, M :: ObExpr
+  - forward  :: L (S ⟶ M ⊗ A)
+  - backward :: R (M ⊗ B ⟶ T)
 
 The residual/complement object `M` is existential at the level of the coend,
 but we represent it explicitly here for simplicity.
@@ -39,11 +49,11 @@ Type-checked constructor: enforces the optic typing in the underlying SMC.
 """
 function Optic(S::ObExpr, A::ObExpr, T::ObExpr, B::ObExpr, M::ObExpr,
                forward::HomExpr, backward::HomExpr)
-    # Type checks in the monoidal category
-    @assert dom(forward) == S
-    @assert codom(forward) == (M ⊗ A)
-    @assert dom(backward) == (M ⊗ B)
-    @assert codom(backward) == T
+    # Type checking in the base category
+    @assert dom(forward) == S "Forward domain mismatch"
+    @assert codom(forward) == (M ⊗ A) "Forward codomain mismatch"
+    @assert dom(backward) == (M ⊗ B) "Backward domain mismatch"
+    @assert codom(backward) == T "Backward codomain mismatch"
 
     return Optic{typeof(S),typeof(A),typeof(T),typeof(B),typeof(M),
                  typeof(forward),typeof(backward)}(
@@ -53,6 +63,16 @@ end
 
 # TODO: product
 # TODO: diagonal_pairing
+
+#--------------------------------------------------------------------
+# Optic Category Structure
+#--------------------------------------------------------------------
+
+# Objects: maybe literally pairs?
+struct OpticObject{S,T}
+    source :: S
+    target :: T
+end
 
 """
     id_optic(S, T)
@@ -134,12 +154,6 @@ whose morphisms are Optics over C.
 """
 struct OpticCategory{C}
     base :: C
-end
-
-# Objects: maybe literally pairs?
-struct OpticObject{S,T}
-    source :: S
-    target :: T
 end
 
 # Objects of the optic category (S,T) → (A,B)
