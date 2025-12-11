@@ -68,11 +68,16 @@ end
 # Optic Category Structure
 #--------------------------------------------------------------------
 
-# Objects: maybe literally pairs?
 struct OpticObject{S,T}
     source :: S
     target :: T
 end
+
+Base.show(io::IO, obj::OpticObject) = print(io, "($(obj.S), $(obj.T))")
+
+# Domain and codomain for optics (S,T) → (A,B)
+dom(o::Optic) = OpticObject(o.S, o.T)
+codom(o::Optic) = OpticObject(o.A, o.B)
 
 """
     id_optic(S, T)
@@ -89,8 +94,8 @@ function id_optic(S::ObExpr, T::ObExpr)
 
     # In a *strict* monoidal category we have I ⊗ S ≡ S, I ⊗ T ≡ T,
     # so we can take these to be identities (i.e., λ and ρ are ids).
-    forward  = id(S)  # S ⟶ S  (≅ I ⊗ S)
-    backward = id(T)  # T ⟶ T  (≅ I ⊗ T)
+    forward  = id(S)  # S ⟶ I ⊗ S (≅ S)
+    backward = id(T)  # I ⊗ T ≅ T
 
     return Optic(S, S, T, T, I, forward, backward)
 end
@@ -114,7 +119,7 @@ this matches the typical lens-like case. But, we can generalize to the
 full profunctor encoding later for different B₁,B₂.
 """
 function compose_optic(o2::Optic, o1::Optic)
-    # Ensure the middle matches
+    # Check compatibility of foci
     @assert o1.A == o2.S  "Inner focus objects must match (A)."
     @assert o1.B == o2.B  "Update object B must currently agree for composition."
 
@@ -128,42 +133,58 @@ function compose_optic(o2::Optic, o1::Optic)
     # New residual is tensor of residuals
     M = M1 ⊗ M2
 
-    # Forward:
-    #   S ──l1──▶ M1 ⊗ A
-    #        id(M1)⊗l2
-    #     ───────────▶ M1 ⊗ (M2 ⊗ U)
-    #
+    # Forward: S → M1⊗A → M1⊗(M2⊗U) ≅ (M1⊗M2)⊗U
     # Using (strict) associativity, this is a morphism S → M ⊗ U.
-    forward = (id(M1) ⊗ l2) ⋅ l1
+    forward = compose(l1, id(M1) ⊗ l2)
 
-    # Backward:
-    #   M1 ⊗ (M2 ⊗ B) ── id(M1)⊗r2 ──▶ M1 ⊗ B ──r1──▶ T1
-    #
+    # Backward: (M1⊗M2)⊗B ≅ M1⊗(M2⊗B) → M1⊗B → T1
     # Again, (strict) associativity lets us view the domain as (M1 ⊗ M2) ⊗ B.
-    backward = r1 ⋅ (id(M1) ⊗ r2)
+    backward = compose(id(M1) ⊗ r2, r1)
 
     return Optic(S, U, T1, B, M, forward, backward)
 end
 
+# Monoidal product of optics
+function otimes_optic(o1::Optic, o2::Optic)
+    S1, A1, T1, B1, M1 = o1.S, o1.A, o1.T, o1.B, o1.M
+    S2, A2, T2, B2, M2 = o2.S, o2.A, o2.T, o2.B, o2.M
+    
+    M = M1 ⊗ M2
+    
+    # Forward: (S1⊗S2) → (M1⊗A1)⊗(M2⊗A2) ≅ (M1⊗M2)⊗(A1⊗A2)
+    forward = compose(braid(S1, S2), 
+                      o1.forward ⊗ o2.forward,
+                      braid(M1 ⊗ A1, M2 ⊗ A2))
+    
+    # Backward: (M1⊗M2)⊗(B1⊗B2) ≅ (M1⊗B1)⊗(M2⊗B2) → T1⊗T2
+    backward = compose(braid(M ⊗ B1, B2),
+                       o1.backward ⊗ o2.backward)
+    
+    Optic(S1 ⊗ S2, A1 ⊗ A2, T1 ⊗ T2, B1 ⊗ B2, M, forward, backward)
+end
+
+#-------------------------------------------------------------------------------
+# Optic Category
+#-------------------------------------------------------------------------------
 
 """
-    OpticCategory(C::MonoidalCategory)
+    OpticCategory(C::SymmetricMonoidalCategory)
 
 Build the category whose objects are pairs (S,T) of objects in C and
 whose morphisms are Optics over C.
 """
-struct OpticCategory{C}
+struct OpticCategory{C} <: Category
     base :: C
 end
 
-# Objects of the optic category (S,T) → (A,B)
-dom(o::Optic) = OpticObject(o.S, o.T)
-codom(o::Optic) = OpticObject(o.A, o.B)
+Base.show(io::IO, OC::OpticCategory) = print(io, "OpticCategory($(OC.base))")
 
-# Identity optic at (S,T)
-id(OC::OpticCategory, X::OpticObject) = id_optic(X.source, X.target)
+# Category interface
+ob(OC::OpticCategory, pair::Tuple) = OpticObject(pair...)
+hom(OC::OpticCategory, o::Optic) = o
 
-# Composition in the optic category
+# Identity and composition in the optic category
+id(OC::OpticCategory, X::OpticObject) = id_optic(X.S, X.T)
 compose(OC::OpticCategory, g::Optic, f::Optic) = compose_optic(g, f)
 
 
