@@ -2,7 +2,7 @@ module Optics
 
 using Theories
 
-import Theories: HomExpr, ObExpr
+import Theories: HomExpr, ObExpr, dom, codom, id, compose
 
 """
     Optic{S,A,T,B,M,L,R}
@@ -50,12 +50,6 @@ function Optic(S::ObExpr, A::ObExpr, T::ObExpr, B::ObExpr, M::ObExpr,
     )
 end
 
-
-# TODO: left_unitor() and right_unitor()
-# TODO: inv()
-# TODO: associator()
-# TODO: tensor
-# TODO: id
 # TODO: product
 # TODO: diagonal_pairing
 
@@ -147,16 +141,15 @@ struct OpticObject{S,T}
     target :: T
 end
 
-# TODO: catlab cat interface
+# Objects of the optic category (S,T) → (A,B)
+dom(o::Optic) = OpticObject(o.S, o.T)
+codom(o::Optic) = OpticObject(o.A, o.B)
 
-# dom(o::Optic) = OpticObject(o.S, o.T)
-# codom(o::Optic) = OpticObject(o.A, o.B)
+# Identity optic at (S,T)
+id(OC::OpticCategory, X::OpticObject) = id_optic(X.source, X.target)
 
-# id(CO::OpticObject, OC::OpticCategory) =
-#    id_optic(OC.base, CO.source, CO.target)
-
-# compose(o2::Optic, o1::Optic, OC::OpticCategory) =
-#    compose_optic(o2, o1)
+# Composition in the optic category
+compose(OC::OpticCategory, g::Optic, f::Optic) = compose_optic(g, f)
 
 
 
