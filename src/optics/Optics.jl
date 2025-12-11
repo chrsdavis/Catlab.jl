@@ -160,29 +160,29 @@ end
 
 
 
-include("Lens.jl")  # Lens specializaton
+# include("Lens.jl")  # Lens specializaton
 
-# TODO: LensOptic
+# # TODO: LensOptic
 
-"""
-    lens_to_optic(L::Lens)
+# """
+#     lens_to_optic(L::Lens)
 
-Convert a Lens (in a cartesian category) into a generic Optic.
-"""
-function lens_to_optic(L::Lens)
-    C, S, A, T, B = L.C, L.S, L.A, L.T, L.B
+# Convert a Lens (in a cartesian category) into a generic Optic.
+# """
+# function lens_to_optic(L::Lens)
+#     C, S, A, T, B = L.C, L.S, L.A, L.T, L.B
 
-    M = S
+#     M = S
 
-    prod      = product(C, S, A)          # S × A
-    pair      = diagonal_pairing(C, S, A, L.view)   # ⟨id_S, view⟩ : S → S × A
-    forward   = pair
-    backward  = L.update                  # S × B → T
+#     prod      = product(C, S, A)          # S × A
+#     pair      = diagonal_pairing(C, S, A, L.view)   # ⟨id_S, view⟩ : S → S × A
+#     forward   = pair
+#     backward  = L.update                  # S × B → T
 
-    return Optic{typeof(C),S,A,T,B,typeof(M)}(C, forward, backward)
-end
+#     return Optic{typeof(C),S,A,T,B,typeof(M)}(C, forward, backward)
+# end
 
-# Convenience type alias
-const LensOptic{C,S,A,T,B} = Optic{C,S,A,T,B,S}
+# # Convenience type alias
+# const LensOptic{C,S,A,T,B} = Optic{C,S,A,T,B,S}
 
 end # module Optics
