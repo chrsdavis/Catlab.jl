@@ -1,6 +1,6 @@
 using ...BasicSets, ...CategoricalAlgebra
 using ...Theories
-import ...Theories: HomExpr, ObExpr, dom, codom, id, compose, ⊗, ⋅, munit
+import ...Theories: HomExpr, ObExpr, dom, codom, id, compose, ⊗, ⋅, munit, braid
 import ...CategoricalAlgebra: Category, ob, hom
 
 export Optic, OpticCategory, OpticObject
