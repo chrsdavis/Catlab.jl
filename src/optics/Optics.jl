@@ -1,5 +1,3 @@
-module Optics
-
 using ..Theories
 import ..Theories: HomExpr, ObExpr, dom, codom, id, compose, ⊗, ⋅, munit, braid
 
@@ -272,5 +270,3 @@ function reindex_optic(f::HomExpr, g::HomExpr)
     
     Optic(S, A, T, B, M, forward, backward)
 end
-
-end # module Optics
