@@ -50,11 +50,11 @@ forward(o::Optic)  = o.forward
 backward(o::Optic) = o.backward
 
 """
-    Optic(S, A, T, B, M, forward, backward)
+    checked_optic(S, A, T, B, M, forward, backward)
 
 Type-checked constructor: enforces the optic typing in the underlying SMC.
 """
-function Optic(S::ObExpr, A::ObExpr, T::ObExpr, B::ObExpr, M::ObExpr,
+function checked_optic(S::ObExpr, A::ObExpr, T::ObExpr, B::ObExpr, M::ObExpr,
                forward::HomExpr, backward::HomExpr)
     # TODO: Need to check if SMC theory already simplifies (munit() ⊗ S) to S,
     # otherwies, id_optic would fail here since it checks literal equality
@@ -108,7 +108,7 @@ function id_optic(S::ObExpr, T::ObExpr)
     forward  = id(S)  # S ⟶ I ⊗ S (≅ S)
     backward = id(T)  # I ⊗ T ≅ T
 
-    return Optic(S, S, T, T, I, forward, backward)
+    return checked_optic(S, S, T, T, I, forward, backward)
 end
 
 
@@ -152,7 +152,7 @@ function compose_optic(o2::Optic, o1::Optic)
     # Again, (strict) associativity lets us view the domain as (M1 ⊗ M2) ⊗ B.
     backward = compose(id(M1) ⊗ r2, r1)
 
-    return Optic(S, U, T1, B, M, forward, backward)
+    return checked_optic(S, U, T1, B, M, forward, backward)
 end
 
 """
@@ -190,7 +190,7 @@ function otimes_optic(o1::Optic, o2::Optic)
         o1.backward ⊗ o2.backward
     )
     
-    Optic(S, A, T, B, M, forward, backward)
+    checked_optic(S, A, T, B, M, forward, backward)
 end
 
 #-------------------------------------------------------------------------------
@@ -250,7 +250,7 @@ function optic(forward::HomExpr, backward::HomExpr)
     B = right(MB)
     T = codom(backward)
     
-    Optic(S, A, T, B, M, forward, backward)
+    checked_optic(S, A, T, B, M, forward, backward)
 end
 
 # TODO: implement proper pattern-matching on ⊗ for ObExpr
@@ -279,5 +279,5 @@ function reindex_optic(f::HomExpr, g::HomExpr)
     forward = f  # S → A ≅ I⊗A
     backward = g # B → T ≅ I⊗B → T (with unitor)
     
-    Optic(S, A, T, B, M, forward, backward)
+    checked_optic(S, A, T, B, M, forward, backward)
 end
