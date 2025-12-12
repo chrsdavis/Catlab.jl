@@ -1,11 +1,9 @@
 module Optics
 
-using ...Theories
-import ...Theories: HomExpr, ObExpr, dom, codom, id, compose, ⊗, ⋅, munit
+using ..Theories
+import ..Theories: HomExpr, ObExpr, dom, codom, id, compose, ⊗, ⋅, munit
 
-export Optic, OpticCategory, OpticObject, dom, codom, id, compose,
-       otimes_optic, parallel_optic, optic_lens, optic_prism,
-       lens_to_optic, prism_to_optic
+export Optic, OpticCategory, OpticObject, dom, codom, id, compose
 
 
 #--------------------------------------------------------------------
@@ -144,25 +142,6 @@ function compose_optic(o2::Optic, o1::Optic)
     return Optic(S, U, T1, B, M, forward, backward)
 end
 
-# Monoidal product of optics
-function otimes_optic(o1::Optic, o2::Optic)
-    S1, A1, T1, B1, M1 = o1.S, o1.A, o1.T, o1.B, o1.M
-    S2, A2, T2, B2, M2 = o2.S, o2.A, o2.T, o2.B, o2.M
-    
-    M = M1 ⊗ M2
-    
-    # Forward: (S1⊗S2) → (M1⊗A1)⊗(M2⊗A2) ≅ (M1⊗M2)⊗(A1⊗A2)
-    forward = compose(braid(S1, S2), 
-                      o1.forward ⊗ o2.forward,
-                      braid(M1 ⊗ A1, M2 ⊗ A2))
-    
-    # Backward: (M1⊗M2)⊗(B1⊗B2) ≅ (M1⊗B1)⊗(M2⊗B2) → T1⊗T2
-    backward = compose(braid(M ⊗ B1, B2),
-                       o1.backward ⊗ o2.backward)
-    
-    Optic(S1 ⊗ S2, A1 ⊗ A2, T1 ⊗ T2, B1 ⊗ B2, M, forward, backward)
-end
-
 #-------------------------------------------------------------------------------
 # Optic Category
 #-------------------------------------------------------------------------------
@@ -177,7 +156,16 @@ struct OpticCategory{C} <: Category
     base :: C
 end
 
-Base.show(io::IO, OC::OpticCategory) = print(io, "OpticCategory($(OC.base))")
+function Base.show(io::IO, o::Optic{S,A,T,B,M}) where {S,A,T,B,M}
+    print(io, "Optic(")
+    show(io, S); print(io, " → ")
+    show(io, A); print(io, ", ")
+    show(io, T); print(io, " ← ")
+    show(io, B)
+    print(io, "; M=")
+    show(io, M)
+    print(io, ")")
+end
 
 # Category interface
 ob(OC::OpticCategory, pair::Tuple) = OpticObject(pair...)

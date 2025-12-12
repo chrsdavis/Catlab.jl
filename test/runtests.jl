@@ -37,3 +37,7 @@ end
 @testset "Sheaves" begin
   include("sheaves/runtests.jl")
 end
+
+@testset "Optics" begin
+  include("optics/runtests.jl")
+end
