@@ -41,12 +41,12 @@ struct Optic{S<:ObExpr,A<:ObExpr,T<:ObExpr,B<:ObExpr,M<:ObExpr,
 end
 
 # Accessor functions
-source(o::Optic{S}) where {S} = S
-focus(o::Optic{<:Any, A}) where {A} = A
-target(o::Optic{<:Any, <:Any, T}) where {T} = T
-update(o::Optic{<:Any, <:Any, <:Any, B}) where {B} = B
-residual(o::Optic{<:Any, <:Any, <:Any, <:Any, M}) where {M} = M
-forward(o::Optic) = o.forward
+source(o::Optic)   = o.S
+focus(o::Optic)    = o.A
+target(o::Optic)   = o.T
+update(o::Optic)   = o.B
+residual(o::Optic) = o.M
+forward(o::Optic)  = o.forward
 backward(o::Optic) = o.backward
 
 """
