@@ -1,7 +1,7 @@
 module Optics
 
 using ..Theories
-import ..Theories: HomExpr, ObExpr, dom, codom, id, compose, ⊗, ⋅, munit
+import ..Theories: HomExpr, ObExpr, dom, codom, id, compose, ⊗, ⋅, munit, braid
 
 export Optic, OpticCategory, OpticObject, dom, codom, id, compose
 
@@ -39,6 +39,15 @@ struct Optic{S<:ObExpr,A<:ObExpr,T<:ObExpr,B<:ObExpr,M<:ObExpr,
     forward::L    # morphism in C: S → M ⊗ A
     backward::R   # morphism in C: M ⊗ B → T
 end
+
+# Accessor functions
+source(o::Optic{S}) where {S} = S
+focus(o::Optic{<:Any, A}) where {A} = A
+target(o::Optic{<:Any, <:Any, T}) where {T} = T
+update(o::Optic{<:Any, <:Any, <:Any, B}) where {B} = B
+residual(o::Optic{<:Any, <:Any, <:Any, <:Any, M}) where {M} = M
+forward(o::Optic) = o.forward
+backward(o::Optic) = o.backward
 
 """
     Optic(S, A, T, B, M, forward, backward)
@@ -140,6 +149,44 @@ function compose_optic(o2::Optic, o1::Optic)
     backward = compose(id(M1) ⊗ r2, r1)
 
     return Optic(S, U, T1, B, M, forward, backward)
+end
+
+"""
+    otimes_optic(o1::Optic, o2::Optic)
+
+Monoidal product of optics. This requires braiding to rearrange the
+middle components when tensoring the forward/backward maps.
+
+Note: This is more complex and might not be needed initially.
+We'll implement it properly if needed.
+"""
+function otimes_optic(o1::Optic, o2::Optic)
+    S1, A1, T1, B1, M1 = o1.S, o1.A, o1.T, o1.B, o1.M
+    S2, A2, T2, B2, M2 = o2.S, o2.A, o2.T, o2.B, o2.M
+    
+    M = M1 ⊗ M2
+    S = S1 ⊗ S2
+    A = A1 ⊗ A2
+    T = T1 ⊗ T2
+    B = B1 ⊗ B2
+    
+    # Forward: S1⊗S2 → (M1⊗A1)⊗(M2⊗A2) ≅ (M1⊗M2)⊗(A1⊗A2)
+    # We need to rearrange: M1⊗A1⊗M2⊗A2 → M1⊗M2⊗A1⊗A2
+    # This requires braiding A1 and M2
+    forward = compose(
+        o1.forward ⊗ o2.forward,
+        id(M1) ⊗ braid(A1, M2) ⊗ id(A2)
+    )
+    
+    # Backward: (M1⊗M2)⊗(B1⊗B2) ≅ M1⊗M2⊗B1⊗B2 → M1⊗B1⊗M2⊗B2 → T1⊗T2
+    # We need to rearrange: M1⊗M2⊗B1⊗B2 → M1⊗B1⊗M2⊗B2
+    # This requires braiding M2 and B1
+    backward = compose(
+        id(M1) ⊗ braid(M2, B1) ⊗ id(B2),
+        o1.backward ⊗ o2.backward
+    )
+    
+    Optic(S, A, T, B, M, forward, backward)
 end
 
 #-------------------------------------------------------------------------------
