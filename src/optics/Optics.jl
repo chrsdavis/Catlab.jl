@@ -251,15 +251,11 @@ function optic(forward::HomExpr, backward::HomExpr)
     Optic(S, A, T, B, M, forward, backward)
 end
 
-# TODO: Need helper to extract left/right factor
-# Helper functions to extract left/right factors (simplified)
-left(expr::ObExpr) = expr  # In actual implementation, need to parse ⊗
-right(expr::ObExpr) = expr
-
-# For now, disable the convenience constructor by default:
+# TODO: implement proper pattern-matching on ⊗ for ObExpr
 function left(expr::ObExpr)
     error("left(expr) not implemented: need to inspect ⊗ structure")
 end
+
 function right(expr::ObExpr)
     error("right(expr) not implemented: need to inspect ⊗ structure")
 end
