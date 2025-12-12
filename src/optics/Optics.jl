@@ -1,7 +1,9 @@
-using ..Theories
-import ..Theories: HomExpr, ObExpr, dom, codom, id, compose, ⊗, ⋅, munit, braid
+using ...BasicSets, ...CategoricalAlgebra
+using ...Theories
+import ...Theories: HomExpr, ObExpr, dom, codom, id, compose, ⊗, ⋅, munit
+import ...CategoricalAlgebra: Category, ob, hom
 
-export Optic, OpticCategory, OpticObject, dom, codom, id, compose
+export Optic, OpticCategory, OpticObject
 
 
 #--------------------------------------------------------------------
@@ -54,6 +56,9 @@ Type-checked constructor: enforces the optic typing in the underlying SMC.
 """
 function Optic(S::ObExpr, A::ObExpr, T::ObExpr, B::ObExpr, M::ObExpr,
                forward::HomExpr, backward::HomExpr)
+    # TODO: Need to check if SMC theory already simplifies (munit() ⊗ S) to S,
+    # otherwies, id_optic would fail here
+
     # Type checking in the base category
     @assert dom(forward) == S "Forward domain mismatch"
     @assert codom(forward) == (M ⊗ A) "Forward codomain mismatch"
@@ -78,7 +83,7 @@ struct OpticObject{S,T}
     target :: T
 end
 
-Base.show(io::IO, obj::OpticObject) = print(io, "($(obj.S), $(obj.T))")
+Base.show(io::IO, obj::OpticObject) = print(io, "($(obj.source), $(obj.target))")
 
 # Domain and codomain for optics (S,T) → (A,B)
 dom(o::Optic) = OpticObject(o.S, o.T)
@@ -217,7 +222,7 @@ ob(OC::OpticCategory, pair::Tuple) = OpticObject(pair...)
 hom(OC::OpticCategory, o::Optic) = o
 
 # Identity and composition in the optic category
-id(OC::OpticCategory, X::OpticObject) = id_optic(X.S, X.T)
+id(OC::OpticCategory, X::OpticObject) = id_optic(X.source, X.target)
 compose(OC::OpticCategory, g::Optic, f::Optic) = compose_optic(g, f)
 
 #-------------------------------------------------------------------------------
@@ -250,6 +255,14 @@ end
 # Helper functions to extract left/right factors (simplified)
 left(expr::ObExpr) = expr  # In actual implementation, need to parse ⊗
 right(expr::ObExpr) = expr
+
+# For now, disable the convenience constructor by default:
+function left(expr::ObExpr)
+    error("left(expr) not implemented: need to inspect ⊗ structure")
+end
+function right(expr::ObExpr)
+    error("right(expr) not implemented: need to inspect ⊗ structure")
+end
 
 #-------------------------------------------------------------------------------
 # Special Optics
